@@ -1,10 +1,10 @@
 name: Build KImageFormats
 on:
   push:
-    branches: [master]
+    branches: [master, nerix-adjustments]
   workflow_dispatch:
   pull_request:
-    branches: [master]
+    branches: [master, nerix-adjustments]
 
 jobs:
   build:
@@ -12,27 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
-            vers: '5.15.2'
-          - os: macos-latest
-            vers: '5.15.2'
           - os: windows-2019
-            vers: '5.15.2'
-            forceWin32: 'true'
-            arch: 'win32_msvc2019'
-          - os: windows-2019
-            vers: '6.2.2'
+            vers: '6.5.0'
             forceWin32: 'false'
             arch: 'win64_msvc2019_64'
           - os: macos-latest
-            vers: '6.2.2'
-            universalBinary: 'true'
-          - os: windows-2019
-            vers: '6.4.3'
-            forceWin32: 'false'
-            arch: 'win64_msvc2019_64'
-          - os: macos-latest
-            vers: '6.4.3'
+            vers: '6.5.0'
             universalBinary: 'true'
 
     steps:
