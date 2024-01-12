@@ -17,7 +17,7 @@ jobs:
             forceWin32: 'false'
             arch: 'win64_msvc2019_64'
           - os: macos-latest
-            vers: '6.5.0'
+            vers: '6.5.3'
             universalBinary: 'true'
 
     steps:
