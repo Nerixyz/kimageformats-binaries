@@ -13,12 +13,12 @@ jobs:
       matrix:
         include:
           - os: windows-2019
-            vers: '6.5.0'
-            forceWin32: 'false'
-            arch: 'win64_msvc2019_64'
+            vers: "6.7.1"
+            forceWin32: "false"
+            arch: "win64_msvc2019_64"
           - os: macos-latest
-            vers: '6.5.3'
-            universalBinary: 'true'
+            vers: "6.7.1"
+            universalBinary: "true"
 
     steps:
       - uses: actions/checkout@v2
@@ -34,7 +34,7 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: '64d69a75df89c6b28a5d4d30fd7eaee138d35a4a'
+          vcpkgGitCommitId: "64d69a75df89c6b28a5d4d30fd7eaee138d35a4a"
 
       - name: Build KImageFormats (just one big step for now)
         run: pwsh pwsh/buildkimageformats.ps1
@@ -42,16 +42,16 @@ jobs:
           forceWin32: ${{ matrix.forceWin32 }}
           universalBinary: ${{ matrix.universalBinary }}
 
-      - name: 'Zip Artifact'
+      - name: "Zip Artifact"
         uses: thedoctor0/zip-release@0.7.1
         with:
-          type: 'zip'
+          type: "zip"
           path: kimageformats/output/
           filename: "kimageformats-${{ matrix.os }}-${{ matrix.vers }}${{ matrix.arch && format('-{0}', matrix.arch) || '' }}.zip"
 
-      - name: 'Upload to continous release'
+      - name: "Upload to continous release"
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 'cont'
+          tag_name: "cont"
           files: kimageformats-*.zip
