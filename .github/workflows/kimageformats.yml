@@ -16,7 +16,7 @@ jobs:
             vers: "6.7.1"
             forceWin32: "false"
             arch: "win64_msvc2019_64"
-          - os: macos-latest
+          - os: macos-13
             vers: "6.7.1"
             universalBinary: "true"
 
