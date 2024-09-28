@@ -1,6 +1,6 @@
-/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 
-$kde_vers = 'v5.108.0'
+$kde_vers = 'v5.116.0'
 
 # Clone
 git clone https://invent.kde.org/frameworks/kimageformats.git
@@ -15,8 +15,16 @@ if (-Not $IsWindows) {
 
 # dependencies
 if ($IsWindows) {
+    if ($env:buildArch -eq 'Arm64') {
+        # CMake needs QT_HOST_PATH when cross-compiling
+        $env:QT_HOST_PATH = [System.IO.Path]::GetFullPath("$env:QT_ROOT_DIR\..\$((Split-Path -Path $env:QT_ROOT_DIR -Leaf) -replace '_arm64', '_64')")
+    }
     & "$env:GITHUB_WORKSPACE/pwsh/vcvars.ps1"
     choco install ninja pkgconfiglite
+
+    # Workaround for https://developercommunity.visualstudio.com/t/10664660
+    $env:CXXFLAGS += " -D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR"
+    $env:CFLAGS += " -D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR"
 } elseif ($IsMacOS) {
     brew update
     brew install ninja
@@ -27,17 +35,7 @@ if ($IsWindows) {
 
 & "$env:GITHUB_WORKSPACE/pwsh/buildecm.ps1" $kde_vers
 & "$env:GITHUB_WORKSPACE/pwsh/get-vcpkg-deps.ps1"
-
-if ($env:forceWin32 -ne 'true') {
-    & "$env:GITHUB_WORKSPACE/pwsh/buildkarchive.ps1" $kde_vers
-}
-
-# HEIF not necessary on macOS since it ships with HEIF support
-if ($IsMacOS) {
-    $heifOn = "OFF"
-} else {
-    $heifOn = "ON"
-}
+& "$env:GITHUB_WORKSPACE/pwsh/buildkarchive.ps1" $kde_vers
 
 if ((qmake --version -split '\n')[1][17] -eq '6') {
     $qt6flag = "-DBUILD_WITH_QT6=ON"
@@ -49,7 +47,7 @@ if (-Not $IsWindows) {
 }
 
 # Build kimageformats
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/installed" -DKIMAGEFORMATS_JXL=ON -DKIMAGEFORMATS_HEIF=$heifOn $qt6flag -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_BUILD_TYPE=release .
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/installed" -DKIMAGEFORMATS_JXL=ON -DKIMAGEFORMATS_HEIF=ON $qt6flag -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_BUILD_TYPE=release .
 
 ninja
 ninja install
@@ -61,7 +59,7 @@ $prefix_out = "output"
 mkdir -p $prefix_out
 
 # Build arm64 version as well and macos and lipo them together
-if ($env:universalBinary) {
+if ($IsMacOS -and $env:buildArch -eq 'Universal') {
     Write-Host "Building arm64 binaries"
 
     rm -rf CMakeFiles/
@@ -69,7 +67,7 @@ if ($env:universalBinary) {
     
     $env:KF5Archive_DIR = $env:KF5Archive_DIR_ARM
 
-    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/installed_arm64" -DKIMAGEFORMATS_JXL=ON -DKIMAGEFORMATS_HEIF=$heifOn $qt6flag -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="arm64-osx" -DCMAKE_OSX_ARCHITECTURES="arm64" -DVCPKG_BUILD_TYPE=release .
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/installed_arm64" -DKIMAGEFORMATS_JXL=ON -DKIMAGEFORMATS_HEIF=ON $qt6flag -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET="arm64-osx" -DCMAKE_OSX_ARCHITECTURES="arm64" -DVCPKG_BUILD_TYPE=release .
 
     ninja
     ninja install
@@ -119,9 +117,13 @@ if ($IsMacOS) {
     install_name_tool -change /Users/runner/work/kimageformats-binaries/kimageformats-binaries/kimageformats/karchive/installed//libKF5Archive.5.dylib @rpath/libKF5Archive.5.dylib output/kimg_kra.so
     install_name_tool -change /Users/runner/work/kimageformats-binaries/kimageformats-binaries/kimageformats/karchive/installed//libKF5Archive.5.dylib @rpath/libKF5Archive.5.dylib output/kimg_ora.so
 
-    if ($env:universalBinary) {
+    if ($IsMacOS -and $env:buildArch -eq 'Universal') {
         install_name_tool -change /Users/runner/work/kimageformats-binaries/kimageformats-binaries/kimageformats/karchive/installed_arm64//libKF5Archive.5.dylib @rpath/libKF5Archive.5.dylib output/kimg_kra.so
         install_name_tool -change /Users/runner/work/kimageformats-binaries/kimageformats-binaries/kimageformats/karchive/installed_arm64//libKF5Archive.5.dylib @rpath/libKF5Archive.5.dylib output/kimg_ora.so
     }
 }
 
+if ($IsWindows) {
+    Write-Host "`nDetecting plugin dependencies..."
+    & "$env:GITHUB_WORKSPACE/pwsh/scankimgdeps.ps1" $prefix_out
+}

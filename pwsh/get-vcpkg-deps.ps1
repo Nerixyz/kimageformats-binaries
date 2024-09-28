@@ -26,19 +26,20 @@ if ($IsWindows) {
     sudo apt-get install nasm libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
 }
 
-# Set up prefixes
+# Set default triplet
 if ($IsWindows) {
-    & "$env:GITHUB_WORKSPACE\pwsh\vcvars.ps1"
-    
-    # Use environment variable to detect if we're building for 64-bit or 32-bit Windows 
-    if ([Environment]::Is64BitOperatingSystem -and ($env:forceWin32 -ne 'true')) {
-        $env:VCPKG_DEFAULT_TRIPLET = "x64-windows"
-    } else {
-        $env:VCPKG_DEFAULT_TRIPLET = "x86-windows"
-    }
+    # Use environment variable to detect target platform
+    $env:VCPKG_DEFAULT_TRIPLET =
+        $env:buildArch -eq 'X86' ? 'x86-windows' :
+        $env:buildArch -eq 'Arm64' ? 'arm64-windows' :
+        'x64-windows'
 } elseif ($IsMacOS) {
-    # Makes things more reproducible for testing on M1 machines
+    # Build x64 first; arm64 will come later for universal binaries
     $env:VCPKG_DEFAULT_TRIPLET = "x64-osx"
+} elseif ($IsLinux) {
+    $env:VCPKG_DEFAULT_TRIPLET = "x64-linux"
+} else {
+    throw 'Unsupported platform.'
 }
 
 # Get our dependencies using vcpkg!
@@ -47,16 +48,53 @@ if ($IsWindows) {
 } else {
     $vcpkgexec = "vcpkg"
 }
-& "$env:VCPKG_ROOT/$vcpkgexec" install --keep-going libjxl libavif openexr zlib libraw
 
+# Create overlay triplet directory
+$env:VCPKG_OVERLAY_TRIPLETS = "$env:GITHUB_WORKSPACE/vcpkg-overlay-triplets"
+New-Item -ItemType Directory -Path $env:VCPKG_OVERLAY_TRIPLETS -Force
 
-# No point to building libheif on mac since Qt has built-in support for HEIF on macOS. Also, this avoids CI problems.
-if (-Not $IsMacOS) {
-    & "$env:VCPKG_ROOT/$vcpkgexec" install libheif
+# Customizes a triplet by starting with the built-in one and appending extra commands
+function WriteOverlayTriplet() {
+    $srcPath = "$env:VCPKG_ROOT/triplets/$env:VCPKG_DEFAULT_TRIPLET.cmake"
+    $dstPath = "$env:VCPKG_OVERLAY_TRIPLETS/$env:VCPKG_DEFAULT_TRIPLET.cmake"
+    Copy-Item -Path $srcPath -Destination $dstPath
+
+    function AppendLine($value) {
+        Add-Content -Path $dstPath -Value $value
+    }
+
+    # Ensure trailing newline is present
+    AppendLine ''
+
+    # Skip debug builds
+    AppendLine 'set(VCPKG_BUILD_TYPE release)'
+
+    if ($IsWindows) {
+        # Workaround for https://developercommunity.visualstudio.com/t/10664660
+        AppendLine 'string(APPEND VCPKG_CXX_FLAGS " -D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")'
+        AppendLine 'string(APPEND VCPKG_C_FLAGS " -D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")'
+    }
 }
+
+# This function will be called for each triplet being built
+function InstallPackages() {
+    WriteOverlayTriplet
+
+    # libheif: Skip x265 on arm64-windows as it doesn't build (only needed for encoding)
+    $libheif = $env:VCPKG_DEFAULT_TRIPLET -eq 'arm64-windows' ? 'libheif[core]' : 'libheif'
+
+    & "$env:VCPKG_ROOT/$vcpkgexec" install libjxl libavif[aom] $libheif openexr zlib libraw
+}
+
+# Build for main triplet
+InstallPackages
 
 # Build arm64-osx dependencies separately--we'll have to combine stuff later.
-if ($env:universalBinary) {
-    & "$env:VCPKG_ROOT/$vcpkgexec" install --keep-going libjxl:arm64-osx libavif:arm64-osx openexr:arm64-osx zlib:arm64-osx libraw:arm64-osx
-}
+if ($IsMacOS -and $env:buildArch -eq 'Universal') {
+    $mainTriplet = $env:VCPKG_DEFAULT_TRIPLET
+    $env:VCPKG_DEFAULT_TRIPLET = 'arm64-osx'
 
+    InstallPackages
+
+    $env:VCPKG_DEFAULT_TRIPLET = $mainTriplet
+}
