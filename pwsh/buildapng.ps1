@@ -1,17 +1,18 @@
 #!/usr/bin/env pwsh
 
-$qtVersion = ((qmake --version -split '\n')[1] -split ' ')[3]
+$qtVersion = [version](qmake -query QT_VERSION)
+Write-Host "Detected Qt Version $qtVersion"
 
 # Clone
 git clone https://github.com/jurplel/QtApng.git
 cd QtApng
-git checkout 6a83caf22111cb8054753b925c2dfbcd9b92e038
+git checkout bd15516b281204e90ecd5b80b00d1274b062f5fc
 
 # Dependencies
 if ($IsWindows) {
     if ($env:buildArch -eq 'Arm64') {
         # CMake needs QT_HOST_PATH when cross-compiling
-        $env:QT_HOST_PATH = [System.IO.Path]::GetFullPath("$env:QT_ROOT_DIR\..\$((Split-Path -Path $env:QT_ROOT_DIR -Leaf) -replace '_arm64', '_64')")
+        $env:QT_HOST_PATH = (qmake -query QT_HOST_PREFIX)
     }
     & "$env:GITHUB_WORKSPACE/pwsh/vcvars.ps1"
     choco install ninja pkgconfiglite
@@ -22,17 +23,24 @@ if ($IsWindows) {
 } elseif ($IsMacOS) {
     brew update
     brew install ninja
+
+    if ($qtVersion -lt [version]'6.5.3') {
+        # Workaround for QTBUG-117484
+        sudo xcode-select --switch /Applications/Xcode_14.3.1.app
+    }
 } else {
     sudo apt-get install ninja-build
 }
 
+$argQt6 = $qtVersion.Major -ne 6 ? '-DAPNG_QT6=OFF' : $null
+$argDeviceArchs = $IsMacOS -and $env:buildArch -eq 'Universal' ? '-DCMAKE_OSX_ARCHITECTURES=x86_64' : $null
+
 # Build
-$argApngQt6 = $qtVersion -like '5.*' ? "-DAPNG_QT6=OFF" : $null
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release $argApngQt6
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release $argQt6 $argDeviceArchs
 ninja -C build
 
 if ($IsMacOS -and $env:buildArch -eq 'Universal') {
-    cmake -B build_arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
+    cmake -B build_arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release $argQt6 -DCMAKE_OSX_ARCHITECTURES=arm64
     ninja -C build_arm64
 }
 
@@ -47,5 +55,10 @@ foreach ($file in $files) {
         lipo -info "$outputDir/$name"
     } else {
         Copy-Item -Path $file -Destination $outputDir
+
+        # Fix linking on Linux
+        if ($IsLinux) {
+            patchelf --set-rpath '$ORIGIN/../../lib' (Join-Path -Path $outputDir -ChildPath $file.Name)
+        }
     }
 }

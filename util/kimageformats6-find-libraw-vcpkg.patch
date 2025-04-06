@@ -1,0 +1,16 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -85,11 +85,12 @@
+ add_feature_info(OpenJPEG OpenJPEG_FOUND "required for the QImage plugin for JPEG 2000 images")
+ 
+ 
+-find_package(LibRaw 0.20.2)
++find_package(LibRaw 0.20.2 NAMES libraw)
+ set_package_properties(LibRaw PROPERTIES
+     TYPE OPTIONAL
+     PURPOSE "Required for the QImage plugin for RAW images"
+ )
++add_library(LibRaw::LibRaw ALIAS libraw::raw_r)
+ 
+ # JXR plugin disabled by default due to security issues
+ option(KIMAGEFORMATS_JXR "Enable plugin for JPEG XR format" OFF)

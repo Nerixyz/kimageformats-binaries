@@ -6,19 +6,25 @@ on:
   pull_request:
     branches: [master, nerix-adjustments]
 
+env:
+  VCPKG_BINARY_SOURCES: "clear;default,readwrite"
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: windows-2019
-            vers: "6.7.3"
-            forceWin32: "false"
-            arch: "win64_msvc2019_64"
-          - os: macos-13
-            vers: "6.7.3"
-            universalBinary: "true"
+          - os: windows-2022
+            vers: "6.9.0"
+            arch: "win64_msvc2022_64"
+          - os: windows-2022
+            vers: "6.9.0"
+            arch: "win64_msvc2022_arm64_cross_compiled"
+            buildArch: "Arm64"
+          - os: macos-14
+            vers: "6.9.0"
+            buildArch: "Universal"
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +40,7 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: "7eb700c9688daed6d8bdcdc571ebe3eedea6a774"
+          vcpkgGitCommitId: "d504de05dcd7b55df34976be1c824324ec6bca2b"
 
       - name: Build KImageFormats (just one big step for now)
         run: pwsh pwsh/buildkimageformats.ps1
