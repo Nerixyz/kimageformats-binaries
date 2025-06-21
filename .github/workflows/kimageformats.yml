@@ -16,9 +16,6 @@ jobs:
       matrix:
         include:
           - os: windows-2022
-            vers: "6.9.0"
-            arch: "win64_msvc2022_64"
-          - os: windows-2022
             vers: "6.8.3"
             arch: "win64_msvc2022_64"
           - os: windows-2022
@@ -27,6 +24,18 @@ jobs:
             buildArch: "Arm64"
           - os: macos-14
             vers: "6.8.3"
+            buildArch: "Universal"
+
+          # Added in nerix-adjustments
+          - os: windows-2022
+            vers: "6.9.1"
+            arch: "win64_msvc2022_64"
+          - os: windows-2022
+            vers: "6.9.1"
+            arch: "win64_msvc2022_arm64_cross_compiled"
+            buildArch: "Arm64"
+          - os: macos-14
+            vers: "6.9.1"
             buildArch: "Universal"
 
     steps:
