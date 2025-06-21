@@ -19,11 +19,14 @@ jobs:
             vers: "6.9.0"
             arch: "win64_msvc2022_64"
           - os: windows-2022
-            vers: "6.9.0"
+            vers: "6.8.3"
+            arch: "win64_msvc2022_64"
+          - os: windows-2022
+            vers: "6.8.3"
             arch: "win64_msvc2022_arm64_cross_compiled"
             buildArch: "Arm64"
           - os: macos-14
-            vers: "6.9.0"
+            vers: "6.8.3"
             buildArch: "Universal"
 
     steps:
@@ -40,7 +43,7 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: "d504de05dcd7b55df34976be1c824324ec6bca2b"
+          vcpkgGitCommitId: "8f54ef5453e7e76ff01e15988bf243e7247c5eb5"
 
       - name: Build KImageFormats (just one big step for now)
         run: pwsh pwsh/buildkimageformats.ps1
