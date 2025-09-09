@@ -28,14 +28,14 @@ jobs:
 
           # Added in nerix-adjustments
           - os: windows-2022
-            vers: "6.9.1"
+            vers: "6.9.2"
             arch: "win64_msvc2022_64"
           - os: windows-2022
-            vers: "6.9.1"
+            vers: "6.9.2"
             arch: "win64_msvc2022_arm64_cross_compiled"
             buildArch: "Arm64"
           - os: macos-14
-            vers: "6.9.1"
+            vers: "6.9.2"
             buildArch: "Universal"
 
     steps:
