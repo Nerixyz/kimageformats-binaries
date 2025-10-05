@@ -1,7 +1,5 @@
 #!/usr/bin/env pwsh
 
-$ErrorActionPreference = 'Stop';
-
 $qtVersion = [version](qmake -query QT_VERSION)
 Write-Host "Detected Qt Version $qtVersion"
 
