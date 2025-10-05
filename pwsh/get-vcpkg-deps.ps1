@@ -21,10 +21,10 @@ if ($IsWindows) {
     choco install nasm meson
 } elseif ($IsMacOS) {
     # See https://code.videolan.org/videolan/dav1d/-/issues/457
-    brew tap-new "$Env:GITHUB_WORKSPACE/local-tap"
+    brew tap-new "$Env:USER/local-tap"
     brew tap homebrew/core --force
-    brew extract --version=2.16.03 nasm "$Env:GITHUB_WORKSPACE/local-tap"
-    brew install "$Env:GITHUB_WORKSPACE/local-tap/nasm@2.16.03"
+    brew extract --version=2.16.03 nasm "$Env:USER/local-tap"
+    brew install "$Env:USER/local-tap/nasm@2.16.03"
 
     brew install yasm meson ninja
     # Uninstall these, otherwise the heif plugin could reference them and
