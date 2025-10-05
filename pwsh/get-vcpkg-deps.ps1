@@ -95,7 +95,7 @@ function WriteOverlayTriplet() {
 function InstallPackages() {
     WriteOverlayTriplet
 
-    & "$env:VCPKG_ROOT/$vcpkgexec" libavif[dav1d]
+    & "$env:VCPKG_ROOT/$vcpkgexec" install dav1d
     & "$env:VCPKG_ROOT/$vcpkgexec" install libjxl libavif[dav1d] libheif openexr zlib libraw
 }
 
