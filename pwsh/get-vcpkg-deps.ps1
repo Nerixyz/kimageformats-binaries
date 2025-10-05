@@ -18,9 +18,9 @@ if ($IsWindows) {
 # Install NASM
 if ($IsWindows) {
     & "$env:GITHUB_WORKSPACE/pwsh/vcvars.ps1"
-    choco install nasm
+    choco install nasm meson
 } elseif ($IsMacOS) {
-    brew install nasm ninja
+    brew install nasm yasm meson ninja
     # Uninstall these, otherwise the heif plugin could reference them and
     # end up not working, but silence stderr in case they aren't present
     foreach ($pkgName in @('webp', 'aom', 'libvmaf')) {
@@ -95,7 +95,7 @@ function WriteOverlayTriplet() {
 function InstallPackages() {
     WriteOverlayTriplet
 
-    & "$env:VCPKG_ROOT/$vcpkgexec" install libjxl libavif[aom] libheif openexr zlib libraw
+    & "$env:VCPKG_ROOT/$vcpkgexec" install libjxl libavif[dav1d] libheif openexr zlib libraw
 }
 
 # Build for main triplet
