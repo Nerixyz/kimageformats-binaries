@@ -20,7 +20,7 @@ if ($IsWindows) {
     & "$env:GITHUB_WORKSPACE/pwsh/vcvars.ps1"
     choco install nasm
 } elseif ($IsMacOS) {
-    brew install nasm
+    brew install nasm yasm ninja
     # Uninstall these, otherwise the heif plugin could reference them and
     # end up not working, but silence stderr in case they aren't present
     foreach ($pkgName in @('webp', 'aom', 'libvmaf')) {
@@ -28,7 +28,7 @@ if ($IsWindows) {
     }
 } else {
     # (and bonus dependencies)
-    sudo apt-get install yasm nasm libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+    sudo apt-get install nasm libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
 }
 
 # Set default triplet
