@@ -20,7 +20,7 @@ if ($IsWindows) {
     & "$env:GITHUB_WORKSPACE/pwsh/vcvars.ps1"
     choco install nasm
 } elseif ($IsMacOS) {
-    brew install nasm yasm ninja
+    brew install nasm ninja
     # Uninstall these, otherwise the heif plugin could reference them and
     # end up not working, but silence stderr in case they aren't present
     foreach ($pkgName in @('webp', 'aom', 'libvmaf')) {
