@@ -21,9 +21,11 @@ if ($IsWindows) {
     choco install nasm meson
 } elseif ($IsMacOS) {
     # See https://code.videolan.org/videolan/dav1d/-/issues/457
-    curl -Sso nasm.rb "https://raw.githubusercontent.com/Homebrew/homebrew-core/8197abd5ad0f893bbc7b99f20cd09b50a4b8f446/Formula/n/nasm.rb"
-    brew install ./nasm.rb
-    Remove-Item nasm.rb
+    brew tap-new "$USER/local-tap"
+    brew tap homebrew/core --force
+    brew extract --version=2.16.03 nasm "$USER/local-tap"
+    brew install "$USER/local-tap/nasm@2.16.03"
+
     brew install yasm meson ninja
     # Uninstall these, otherwise the heif plugin could reference them and
     # end up not working, but silence stderr in case they aren't present
