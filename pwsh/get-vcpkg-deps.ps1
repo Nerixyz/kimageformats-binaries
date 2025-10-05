@@ -28,7 +28,7 @@ if ($IsWindows) {
     }
 } else {
     # (and bonus dependencies)
-    sudo apt-get install nasm libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+    sudo apt-get install yasm nasm libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
 }
 
 # Set default triplet
