@@ -19,45 +19,31 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: windows-2022
-            vers: "6.8.3"
-            arch: "win64_msvc2022_64"
-          - os: windows-2022
-            vers: "6.8.3"
-            arch: "win64_msvc2022_arm64_cross_compiled"
-            buildArch: "Arm64"
-          - os: macos-14
-            vers: "6.8.3"
-            buildArch: "Universal"
-
           # Added in nerix-adjustments
-          # don't need these right now
-          # - os: windows-2022
-          #   vers: "6.9.3"
-          #   arch: "win64_msvc2022_64"
-          # - os: windows-2022
-          #   vers: "6.9.3"
-          #   arch: "win64_msvc2022_arm64_cross_compiled"
-          #   buildArch: "Arm64"
+          # don't need the other ones right now
           - os: macos-14
             vers: "6.9.3"
             buildArch: "Universal"
+          - os: macos-26
+            vers: "6.12.0"
+            buildArch: "Universal"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125
         with:
           cache: true
           version: ${{ matrix.vers }}
           arch: ${{ matrix.arch }}
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c775eb9c7
 
       # Download and build vcpkg, without installing any port. If content is cached already, it is a no-op.
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: "a62ce77d56ee07513b4b67de1ec2daeaebfae51a"
+          vcpkgGitCommitId: "3b156cbdecf72d1032e8e1c80d2de97a0c40a285"
 
       - name: Build KImageFormats (just one big step for now)
         run: pwsh pwsh/buildkimageformats.ps1
