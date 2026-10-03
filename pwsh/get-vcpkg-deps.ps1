@@ -77,6 +77,9 @@ New-Item -ItemType Directory -Path $env:VCPKG_OVERLAY_TRIPLETS -Force
 # Customizes a triplet by starting with the built-in one and appending extra commands
 function WriteOverlayTriplet() {
     $srcPath = "$env:VCPKG_ROOT/triplets/$env:VCPKG_DEFAULT_TRIPLET.cmake"
+    if (!(Test-Path $srcPath)) {
+        $srcPath = "$env:VCPKG_ROOT/triplets/community/$env:VCPKG_DEFAULT_TRIPLET.cmake"
+    }
     $dstPath = "$env:VCPKG_OVERLAY_TRIPLETS/$env:VCPKG_DEFAULT_TRIPLET.cmake"
     Copy-Item -Path $srcPath -Destination $dstPath
 
